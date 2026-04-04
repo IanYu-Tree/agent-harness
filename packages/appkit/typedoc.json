@@ -1,0 +1,5 @@
+{
+  "name": "@agent-orch/appkit",
+  "entryPoints": ["./src/index.ts"],
+  "tsconfig": "./tsconfig.json"
+}

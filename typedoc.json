@@ -1,0 +1,12 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/*"],
+  "entryPointStrategy": "packages",
+  "out": "docs/api",
+  "name": "Agent Orch API Reference",
+  "categorizeByGroup": true,
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "none",
+  "entryFileName": "index",
+  "mergeReadme": true
+}
