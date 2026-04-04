@@ -6,5 +6,6 @@ dist
 .env
 .env.*
 .trae
+.claude
 docs/.vitepress/cache
 docs/.vitepress/dist
