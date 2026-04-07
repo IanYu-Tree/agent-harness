@@ -7,6 +7,8 @@
 
 **A orch framework for orchestrating AI Agents — unifying LLMs, tools, and collaboration patterns under one control plane.**
 
+English | [简体中文](./README.zh-CN.md)
+
 ---
 
 ## Why Agent Orch?
