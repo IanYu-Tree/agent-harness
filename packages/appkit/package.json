@@ -1,0 +1,37 @@
+{
+  "name": "@agent-orch/appkit",
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@agent-orch/core": "workspace:*",
+    "@agent-orch/llm": "workspace:*",
+    "@agent-orch/orch": "workspace:*"
+  },
+  "devDependencies": {
+    "@rslib/core": "^0.6.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

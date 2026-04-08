@@ -1,0 +1,40 @@
+{
+  "name": "@agent-orch/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "agent-orch": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@agent-orch/appkit": "workspace:*",
+    "@agent-orch/core": "workspace:*",
+    "@agent-orch/llm": "workspace:*",
+    "@agent-orch/orch": "workspace:*",
+    "@agent-orch/react-agent": "workspace:*",
+    "@agent-orch/tool": "workspace:*",
+    "@inkjs/ui": "^2.0.0",
+    "chalk": "^5.6.2",
+    "dotenv": "^17.3.1",
+    "ink": "^5.2.0",
+    "marked": "15",
+    "marked-terminal": "7",
+    "react": "^18.3.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@rslib/core": "^0.6.0",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.8.0"
+  }
+}

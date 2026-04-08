@@ -1,0 +1,5 @@
+{
+  "name": "@agent-orch/orch",
+  "entryPoints": ["./src/index.ts"],
+  "tsconfig": "./tsconfig.json"
+}
