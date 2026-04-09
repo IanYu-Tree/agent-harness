@@ -40,7 +40,7 @@ export function startACPServer(options: ACPServerOptions): void {
   app.post('/acp/initialize', async (_req, res) => {
     try {
       const response = await agent.initialize({
-        protocolVersion: '0.1.0',
+        protocolVersion: 1,
         clientCapabilities: {},
       });
       res.json(response);
@@ -153,7 +153,7 @@ export function startACPServer(options: ACPServerOptions): void {
       // 获取用户输入
       const userMessage = prompt.find((p: acp.ContentBlock) => p.type === 'text')?.text ?? '';
       if (!userMessage.trim()) {
-        res.json({ stopReason: 'complete' });
+        res.json({ stopReason: 'end_turn' });
         return;
       }
 
@@ -164,28 +164,92 @@ export function startACPServer(options: ACPServerOptions): void {
       const gen = orch.chatStream(userMessage);
       const processor = new ChatStreamProcessor();
 
-      const finalizedMessages = await processor.processStream(gen, (update) => {
-        if (update.type === 'items-changed' && sseRes) {
-          // 发送流式更新
-          for (const item of update.pendingItems) {
-            sseRes.write(`data: ${JSON.stringify({ type: 'item', item })}\n\n`);
-          }
-        }
+      // Track text items to prevent duplication
+      const textItems = new Map<string, { fullText: string }>();
 
-        if (update.type === 'items-finalized' || update.type === 'error') {
-          if (sseRes) {
-            sseRes.write(`data: ${JSON.stringify({ type: 'finalized', messages: update.finalizedMessages })}\n\n`);
+      const finalizedMessages = await processor.processIncremental(
+        gen,
+        async (event) => {
+          if (!sseRes) return;
+
+          try {
+            switch (event.type) {
+              case 'text_delta': {
+                // Track this item
+                let item = textItems.get(event.itemId);
+                if (!item) {
+                  item = { fullText: '' };
+                  textItems.set(event.itemId, item);
+                }
+                item.fullText = event.fullText;
+
+                sseRes.write(`data: ${JSON.stringify({
+                  type: 'text_delta',
+                  itemId: event.itemId,
+                  delta: event.delta,
+                  agentId: event.agentId,
+                })}\n\n`);
+                break;
+              }
+
+              case 'thinking': {
+                sseRes.write(`data: ${JSON.stringify({
+                  type: 'thinking',
+                  thought: event.thought,
+                  agentId: event.agentId,
+                })}\n\n`);
+                break;
+              }
+
+              case 'tool_start': {
+                sseRes.write(`data: ${JSON.stringify({
+                  type: 'tool_start',
+                  toolId: event.toolId,
+                  name: event.name,
+                  agentId: event.agentId,
+                })}\n\n`);
+                break;
+              }
+
+              case 'tool_end': {
+                sseRes.write(`data: ${JSON.stringify({
+                  type: 'tool_end',
+                  toolId: event.toolId,
+                  result: event.result,
+                  agentId: event.agentId,
+                })}\n\n`);
+                break;
+              }
+
+              case 'completed':
+              case 'error':
+                // Stream completion will be handled by finalizedMessages
+                break;
+            }
+          } catch (error) {
+            console.error('Error sending SSE update:', error);
           }
-        }
-      }, orch.getEventCollector());
+        },
+        orch.getEventCollector()
+      );
+
+      // Send finalized messages
+      if (sseRes) {
+        sseRes.write(`data: ${JSON.stringify({
+          type: 'finalized',
+          messages: finalizedMessages,
+        })}\n\n`);
+      }
 
       // 保存消息
       orch.saveSessionMessages(finalizedMessages);
 
-      res.json({ stopReason: 'complete' });
+      res.json({ stopReason: 'end_turn' });
     } catch (error) {
+      // Log error but don't include in response - PromptResponse only has stopReason
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ error: errorMessage, stopReason: 'error' });
+      console.error('Prompt error:', errorMessage);
+      res.status(500).json({ stopReason: 'end_turn' });
     }
   });
 
