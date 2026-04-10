@@ -1,9 +1,17 @@
-import type { OrchEntry } from '@agent-orch/appkit';
+import type { OrchEntry, LLMConfig } from '@agent-orch/appkit';
 import type { Tool } from '@agent-orch/core';
 import { shellTool } from '../tools/shell.js';
 
-export function createPlannerExecutorDemo(tools: Tool[] = []): OrchEntry {
+export function createPlannerExecutorDemo(llmConfig?: LLMConfig, tools: Tool[] = []): OrchEntry {
   const allTools = [shellTool as unknown as Tool, ...tools];
+
+  const defaultLLMConfig = {
+    modelId: process.env.BOT_MODEL ?? 'openai/gpt-4o',
+    apiKey: process.env.BOT_API_KEY,
+    baseUrl: process.env.BOT_BASE_URL,
+  };
+
+  const config = llmConfig ?? defaultLLMConfig;
 
   return {
     id: 'planner-executor',
@@ -21,11 +29,7 @@ export function createPlannerExecutorDemo(tools: Tool[] = []): OrchEntry {
             'Use the submit_plan tool to submit a structured plan. Each task can specify which executor to use.',
             'After all steps are completed, provide a final summary to the user.',
           ].join('\n'),
-          llmConfig: {
-            modelId: process.env.BOT_MODEL ?? 'openai/gpt-4o',
-            apiKey: process.env.BOT_API_KEY,
-            baseUrl: process.env.BOT_BASE_URL,
-          },
+          llmConfig: config,
         },
         coder: {
           id: 'executor-reflextion',
@@ -40,11 +44,7 @@ export function createPlannerExecutorDemo(tools: Tool[] = []): OrchEntry {
                 'If previous feedback is provided, incorporate it to improve your work.',
                 'Be thorough and verify your results.',
               ].join('\n'),
-              llmConfig: {
-                modelId: process.env.BOT_MODEL ?? 'openai/gpt-4o',
-                apiKey: process.env.BOT_API_KEY,
-                baseUrl: process.env.BOT_BASE_URL,
-              },
+              llmConfig: config,
               tools: allTools,
             },
             critic: {
@@ -57,11 +57,7 @@ export function createPlannerExecutorDemo(tools: Tool[] = []): OrchEntry {
                 '- Set passed=false with specific feedback if improvements are needed',
                 'Be constructive and specific in your feedback.',
               ].join('\n'),
-              llmConfig: {
-                modelId: process.env.BOT_MODEL ?? 'openai/gpt-4o',
-                apiKey: process.env.BOT_API_KEY,
-                baseUrl: process.env.BOT_BASE_URL,
-              },
+              llmConfig: config,
             },
           },
         },

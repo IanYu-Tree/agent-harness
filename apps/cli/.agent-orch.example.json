@@ -1,0 +1,9 @@
+{
+  "llm": {
+    "apiKey": "sk-your-api-key-here",
+    "modelId": "openai/gpt-4o",
+    "baseUrl": "https://api.openai.com/v1"
+  },
+  "defaultOrchId": "single",
+  "customOrchs": []
+}

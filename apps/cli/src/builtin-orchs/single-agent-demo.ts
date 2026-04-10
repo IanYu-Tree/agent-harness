@@ -1,8 +1,8 @@
-import type { OrchEntry } from '@agent-orch/appkit';
+import type { OrchEntry, LLMConfig } from '@agent-orch/appkit';
 import type { Tool } from '@agent-orch/core';
 import { shellTool } from '../tools/shell.js';
 
-export function createSingleAgentDemo(tools: Tool[] = []): OrchEntry {
+export function createSingleAgentDemo(llmConfig?: LLMConfig, tools: Tool[] = []): OrchEntry {
   return {
     id: 'single',
     name: 'Single Agent',
@@ -14,7 +14,7 @@ export function createSingleAgentDemo(tools: Tool[] = []): OrchEntry {
         agent: {
           agentId: 'assistant',
           prompt: 'You are a helpful AI assistant. You can use tools to help the user. Be concise and direct in your responses.',
-          llmConfig: {
+          llmConfig: llmConfig ?? {
             modelId: process.env.BOT_MODEL ?? 'openai/gpt-4o',
             apiKey: process.env.BOT_API_KEY,
             baseUrl: process.env.BOT_BASE_URL,

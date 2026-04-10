@@ -16,7 +16,7 @@ export interface OrchEntry {
 }
 
 export type ContentPart =
-  | { type: 'text'; text: string }
+  | { type: 'text'; text: string; itemId?: string }
   | { type: 'tool_calls'; toolCalls: ToolCallRecord[] };
 
 export interface ChatMessage {

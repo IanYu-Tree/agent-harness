@@ -1,54 +1,39 @@
 # @agent-orch/cli
 
-A terminal-based chat interface for Agent Orch, built with [Ink](https://github.com/vadimdemedes/ink) (React for CLI).
+[![npm](https://img.shields.io/npm/v/@agent-orch/cli)](https://www.npmjs.com/package/@agent-orch/cli)
+[![ACP](https://img.shields.io/badge/ACP-Protocol%20Ready-purple.svg)](https://agentclientprotocol.com)
 
-## Features
+Command-line interface for Agent Orch with **ACP (Agent Client Protocol)** support.
 
-- **Interactive Chat** — Stream responses from AI agents in real-time
-- **Multiple Orchestration Modes** — Switch between SingleAgent, PlannerExecutor, and Reflextion patterns
-- **Dynamic Orch Loading** — Load custom orchestration configurations from JS/TS files at runtime
-- **Session Management** — Persist and resume conversations
-- **Tool Execution** — Built-in shell tool with confirmation support
-- **Debug Panel** — Toggle debug logs to inspect agent execution
+Built with [Ink](https://github.com/vadimdemedes/ink) (React for CLI).
 
-## Installation
+## 🚀 Features
 
-```bash
-pnpm install
-pnpm build
-```
+- **Interactive TUI** — Terminal-based chat with streaming responses
+- **ACP Server** — stdio/HTTP modes for IDE integration (VS Code, Cursor, Windsurf)
+- **Auto-Loading Orchs** — Configure orchestrations via JSON, loaded automatically
+- **Session Management** — Persistent sessions with file-based storage
+- **Dynamic Orch Loading** — Load custom orchestrations at runtime
 
-## Usage
-
-Start the CLI:
+## 📦 Installation
 
 ```bash
-pnpm start
+npm install -g @agent-orch/cli
 # or
-pnpm dev  # watch mode
+pnpm add -g @agent-orch/cli
 ```
 
-### Environment Variables
+## 🎮 Usage
 
-Create a `.env` file:
+### Interactive Mode (TUI)
 
-```env
-# Required: API key (provider-specific env vars also work)
-BOT_API_KEY=your_api_key_here
-# Or use: OPENAI_API_KEY=your_key
-# Or use: ANTHROPIC_API_KEY=your_key
-
-# Optional: Model configuration
-BOT_MODEL=openai/gpt-4o
-# Or use Anthropic: BOT_MODEL=anthropic/claude-3-5-sonnet-20241022
-BOT_BASE_URL=https://api.openai.com/v1
+```bash
+agent-orch
+# or
+npx @agent-orch/cli
 ```
 
-See [LLM Providers](../../docs/concepts/llm-providers.md) for all supported providers and model IDs.
-
-## Slash Commands
-
-Once inside the CLI, use these commands:
+**Slash Commands:**
 
 | Command | Description |
 |---------|-------------|
@@ -61,49 +46,132 @@ Once inside the CLI, use these commands:
 | `/help` | Show available commands |
 | `/exit` | Exit the application |
 
-## Dynamic Orch Loading
+### ACP Server Mode
 
-Load custom orchestration configurations without restarting:
+```bash
+# stdio mode (for IDE integration)
+agent-orch acp
 
+# HTTP mode (for web clients)
+agent-orch acp --http --port=3000
 ```
-/orch-load ./examples/custom-orch.ts
+
+#### HTTP API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/acp/initialize` | POST | Initialize ACP connection |
+| `/acp/session/new` | POST | Create new session |
+| `/acp/session/:id/prompt` | POST | Send prompt |
+| `/acp/session/:id/mode` | POST | Switch orchestration mode |
+| `/acp/orchs` | GET | List available orchestrations |
+| `/acp/sessions` | GET | List active sessions |
+
+## ⚙️ Configuration
+
+Create `~/.agent-orch/.agent-orch.json`:
+
+```json
+{
+  "llm": {
+    "apiKey": "sk-your-api-key",
+    "modelId": "openai/gpt-4o",
+    "baseUrl": "optional-custom-endpoint"
+  },
+  "defaultOrchId": "single",
+  "orchs": [
+    {
+      "id": "my-custom",
+      "path": "./path/to/my-orch.ts"
+    }
+  ]
+}
 ```
 
-Supported export formats in your config file:
+Or use environment variables:
+
+```env
+BOT_API_KEY=your_api_key
+BOT_MODEL=openai/gpt-4o
+BOT_BASE_URL=https://api.openai.com/v1
+```
+
+### Custom Orchestration Example
 
 ```typescript
-// Option 1: Default export function
-export default function createOrch(): OrchEntry {
+// my-orch.ts
+import type { OrchEntry } from '@agent-orch/appkit';
+
+export default function createMyOrch(): OrchEntry {
   return {
-    id: "custom",
-    name: "Custom Agent",
-    config: { /* ... */ },
+    id: 'my-custom',
+    name: 'My Custom Orch',
+    description: 'A custom orchestration',
+    config: {
+      id: 'my-orch',
+      type: 'singleAgent',
+      agents: {
+        agent: {
+          agentId: 'assistant',
+          prompt: 'You are a helpful assistant.',
+          llmConfig: {
+            modelId: process.env.BOT_MODEL ?? 'openai/gpt-4o',
+            apiKey: process.env.BOT_API_KEY,
+          },
+          tools: [],
+        },
+      },
+    },
   };
-}
-
-// Option 2: Named export 'orch'
-export const orch: OrchEntry = {
-  id: "custom",
-  name: "Custom Agent",
-  config: { /* ... */ },
-};
-
-// Option 3: Named export 'createOrch'
-export function createOrch(): OrchEntry {
-  return { /* ... */ };
 }
 ```
 
-After loading, switch to your custom mode with `/orch`.
+## 🔌 ACP Protocol
 
-## Examples
+This CLI implements the [Agent Client Protocol](https://agentclientprotocol.com), enabling integration with ACP-compatible IDEs.
 
-See the `examples/` directory for sample configurations:
+### Supported Methods
 
-- `custom-orch.ts` — Single agent configuration
-- `custom-planner-executor.ts` — Multi-agent planner-executor pattern
+| Method | Description |
+|--------|-------------|
+| `initialize` | Protocol initialization |
+| `session/new` | Create new session |
+| `session/prompt` | Send prompt (streaming) |
+| `session/cancel` | Cancel ongoing prompt |
+| `session/load` | Load existing session |
+| `session/list` | List all sessions |
+| `session/resume` | Resume a session |
+| `session/close` | Close a session |
+| `session/set_mode` | Switch orchestration mode |
 
-## Keyboard Shortcuts
+### Streaming Events
+
+- `agent_message_chunk` — Text content chunks with `messageId`
+- `agent_thought_chunk` — Reasoning/thinking content
+- `tool_call` — Tool execution started
+- `tool_call_update` — Tool execution completed
+
+## 🛠️ Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build
+pnpm build
+
+# Run locally
+node dist/index.js
+
+# Run ACP server
+node dist/index.js acp
+
+# Watch mode
+pnpm dev
+```
+
+## ⌨️ Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -112,34 +180,6 @@ See the `examples/` directory for sample configurations:
 | `Tab` | Accept autocomplete |
 | `↑/↓` | Navigate history |
 
-## Project Structure
-
-```
-src/
-├── builtin-orchs/      # Built-in orchestration configurations
-│   ├── index.ts
-│   ├── single-agent-demo.ts
-│   └── planner-executor-demo.ts
-├── components/         # React components for Ink UI
-│   ├── App.tsx
-│   ├── Composer.tsx
-│   ├── OrchSelector.tsx
-│   └── ...
-├── hooks/              # React hooks
-│   ├── useCommands.ts
-│   └── useStreamHandler.ts
-├── tools/              # Built-in tools
-│   └── shell.ts
-├── utils/              # Utilities
-│   ├── historyConverter.ts
-│   └── loadUserOrch.ts
-├── examples/           # Example custom configurations
-│   ├── custom-orch.ts
-│   └── custom-planner-executor.ts
-├── index.tsx           # Entry point
-└── types.ts            # Type definitions
-```
-
-## License
+## 📄 License
 
 MIT
